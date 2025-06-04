@@ -45,6 +45,11 @@ const forms = [
   { name: "Conform", path: "/forms/conform" },
 ];
 
+const nextjs = [
+  { name: "Functions", path: "/nextjs/functions" },
+  { name: "Components", path: "/nextjs/components" },
+];
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -107,6 +112,22 @@ export default function RootLayout({
                         asChild
                       >
                         <Link href={form.path}>{form.name}</Link>
+                      </Button>
+                    ))}
+                  </div>
+                  <Separator className="my-4" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-muted-foreground mb-2">
+                      Next.js
+                    </h2>
+                    {nextjs.map((item) => (
+                      <Button
+                        key={item.name}
+                        variant="ghost"
+                        className="w-full justify-start mb-1"
+                        asChild
+                      >
+                        <Link href={item.path}>{item.name}</Link>
                       </Button>
                     ))}
                   </div>
