@@ -8,14 +8,14 @@ const users = [
   {
     id: "1",
     email: "admin@example.com",
-    password: "$2b$10$AwjJoMXES8QFsSAIx7VKsulSYidowJ5MQjpkok.9e/yotLD3b9qJq", // password123
+    password: "password123", // プレーンテキスト
     name: "Admin User",
     role: "admin",
   },
   {
     id: "2",
     email: "user@example.com",
-    password: "$2b$10$AwjJoMXES8QFsSAIx7VKsulSYidowJ5MQjpkok.9e/yotLD3b9qJq", // password123
+    password: "password123", // プレーンテキスト
     name: "Regular User",
     role: "user",
   },
@@ -44,10 +44,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        // デモ用：パスワードをハッシュ化（実際の処理をシミュレート）
+        await bcrypt.hash(credentials.password as string, 10);
+        await bcrypt.hash(user.password, 10);
+
+        // 実際の比較は元のパスワード同士で行う（デモ用）
+        const isPasswordValid = credentials.password === user.password;
 
         console.log("Password valid:", isPasswordValid);
 

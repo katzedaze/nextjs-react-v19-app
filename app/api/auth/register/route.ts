@@ -5,14 +5,14 @@ const users = [
   {
     id: "1",
     email: "admin@example.com",
-    password: "$2b$10$AwjJoMXES8QFsSAIx7VKsulSYidowJ5MQjpkok.9e/yotLD3b9qJq", // password123
+    password: "password123", // プレーンテキスト
     name: "Admin User",
     role: "admin",
   },
   {
     id: "2",
     email: "user@example.com",
-    password: "$2b$10$AwjJoMXES8QFsSAIx7VKsulSYidowJ5MQjpkok.9e/yotLD3b9qJq", // password123
+    password: "password123", // プレーンテキスト
     name: "Regular User",
     role: "user",
   },
