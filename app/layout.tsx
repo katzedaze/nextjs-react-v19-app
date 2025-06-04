@@ -1,3 +1,4 @@
+import { Providers } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -48,6 +49,13 @@ const forms = [
 const nextjs = [
   { name: "Functions", path: "/nextjs/functions" },
   { name: "Components", path: "/nextjs/components" },
+];
+
+const auth = [
+  { name: "ログイン", path: "/auth/signin" },
+  { name: "ダッシュボード", path: "/dashboard" },
+  { name: "プロフィール", path: "/profile" },
+  { name: "管理画面", path: "/admin" },
 ];
 
 export default function RootLayout({
@@ -131,12 +139,30 @@ export default function RootLayout({
                       </Button>
                     ))}
                   </div>
+                  <Separator className="my-4" />
+                  <div>
+                    <h2 className="text-sm font-semibold text-muted-foreground mb-2">
+                      認証・認可
+                    </h2>
+                    {auth.map((item) => (
+                      <Button
+                        key={item.name}
+                        variant="ghost"
+                        className="w-full justify-start mb-1"
+                        asChild
+                      >
+                        <Link href={item.path}>{item.name}</Link>
+                      </Button>
+                    ))}
+                  </div>
                 </div>
               </ScrollArea>
             </div>
           </nav>
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-8">{children}</div>
+            <Providers>
+              <div className="container mx-auto p-8">{children}</div>
+            </Providers>
           </main>
         </div>
       </body>
