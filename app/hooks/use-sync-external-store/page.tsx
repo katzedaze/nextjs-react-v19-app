@@ -10,24 +10,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCallback, useState, useSyncExternalStore } from "react";
 
 // ブラウザAPI: オンライン状態の監視
 function OnlineStatusExample() {
+  const subscribe = useCallback((callback: () => void) => {
+    if (typeof window === "undefined") return () => {};
+    window.addEventListener("online", callback);
+    window.addEventListener("offline", callback);
+    return () => {
+      window.removeEventListener("online", callback);
+      window.removeEventListener("offline", callback);
+    };
+  }, []);
+
+  const getSnapshot = useCallback(() => {
+    return typeof navigator !== "undefined" ? navigator.onLine : true;
+  }, []);
+
+  const getServerSnapshot = useCallback(() => true, []);
+
   const isOnline = useSyncExternalStore(
-    (callback) => {
-      window.addEventListener("online", callback);
-      window.addEventListener("offline", callback);
-      return () => {
-        window.removeEventListener("online", callback);
-        window.removeEventListener("offline", callback);
-      };
-    },
-    () => navigator.onLine,
-    () => true // サーバーサイドでのデフォルト値
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
   );
 
   return (
@@ -48,47 +55,6 @@ function OnlineStatusExample() {
 
       <div className="text-sm text-muted-foreground">
         ネットワーク接続を切断/再接続してステータスの変化を確認してください。
-      </div>
-    </div>
-  );
-}
-
-// ブラウザAPI: ウィンドウサイズの監視
-function WindowSizeExample() {
-  const windowSize = useSyncExternalStore(
-    (callback) => {
-      window.addEventListener("resize", callback);
-      return () => window.removeEventListener("resize", callback);
-    },
-    () => ({ width: window.innerWidth, height: window.innerHeight }),
-    () => ({ width: 0, height: 0 }) // サーバーサイドでのデフォルト値
-  );
-
-  const getBreakpoint = (width: number) => {
-    if (width < 640) return "sm";
-    if (width < 768) return "md";
-    if (width < 1024) return "lg";
-    if (width < 1280) return "xl";
-    return "2xl";
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 bg-muted rounded">
-          <h4 className="font-semibold">ウィンドウサイズ</h4>
-          <p>幅: {windowSize.width}px</p>
-          <p>高さ: {windowSize.height}px</p>
-        </div>
-
-        <div className="p-4 bg-muted rounded">
-          <h4 className="font-semibold">ブレイクポイント</h4>
-          <Badge variant="outline">{getBreakpoint(windowSize.width)}</Badge>
-        </div>
-      </div>
-
-      <div className="text-sm text-muted-foreground">
-        ウィンドウのサイズを変更してリアルタイムの変化を確認してください。
       </div>
     </div>
   );
@@ -152,117 +118,6 @@ function CounterStoreExample() {
   );
 }
 
-// カスタムストア: 設定管理
-interface Settings {
-  theme: "light" | "dark";
-  language: "ja" | "en";
-  notifications: boolean;
-}
-
-class SettingsStore {
-  private settings: Settings = {
-    theme: "light",
-    language: "ja",
-    notifications: true,
-  };
-
-  private listeners = new Set<() => void>();
-
-  subscribe = (callback: () => void) => {
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
-  };
-
-  getSnapshot = () => ({ ...this.settings });
-
-  updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    this.settings[key] = value;
-    this.listeners.forEach((callback) => callback());
-  };
-
-  resetSettings = () => {
-    this.settings = {
-      theme: "light",
-      language: "ja",
-      notifications: true,
-    };
-    this.listeners.forEach((callback) => callback());
-  };
-}
-
-const settingsStore = new SettingsStore();
-
-function SettingsStoreExample() {
-  const settings = useSyncExternalStore(
-    settingsStore.subscribe,
-    settingsStore.getSnapshot,
-    () => ({
-      theme: "light" as const,
-      language: "ja" as const,
-      notifications: true,
-    })
-  );
-
-  return (
-    <div className="space-y-4">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label>テーマ</Label>
-          <select
-            value={settings.theme}
-            onChange={(e) =>
-              settingsStore.updateSetting(
-                "theme",
-                e.target.value as "light" | "dark"
-              )
-            }
-            className="p-2 border rounded"
-          >
-            <option value="light">ライト</option>
-            <option value="dark">ダーク</option>
-          </select>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label>言語</Label>
-          <select
-            value={settings.language}
-            onChange={(e) =>
-              settingsStore.updateSetting(
-                "language",
-                e.target.value as "ja" | "en"
-              )
-            }
-            className="p-2 border rounded"
-          >
-            <option value="ja">日本語</option>
-            <option value="en">English</option>
-          </select>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label>通知</Label>
-          <Switch
-            checked={settings.notifications}
-            onCheckedChange={(checked) =>
-              settingsStore.updateSetting("notifications", checked)
-            }
-          />
-        </div>
-      </div>
-
-      <div className="p-4 bg-muted rounded">
-        <h4 className="font-semibold mb-2">現在の設定</h4>
-        <pre className="text-sm">{JSON.stringify(settings, null, 2)}</pre>
-      </div>
-
-      <Button onClick={settingsStore.resetSettings} variant="outline">
-        設定をリセット
-      </Button>
-    </div>
-  );
-}
-
 // ローカルストレージとの同期
 function createLocalStorageStore(key: string, defaultValue: string) {
   return {
@@ -273,11 +128,15 @@ function createLocalStorageStore(key: string, defaultValue: string) {
         }
       };
 
-      window.addEventListener("storage", handleStorage);
-      return () => window.removeEventListener("storage", handleStorage);
+      if (typeof window !== "undefined") {
+        window.addEventListener("storage", handleStorage);
+        return () => window.removeEventListener("storage", handleStorage);
+      }
+      return () => {};
     },
 
     getSnapshot: () => {
+      if (typeof window === "undefined") return defaultValue;
       try {
         return localStorage.getItem(key) ?? defaultValue;
       } catch {
@@ -288,6 +147,7 @@ function createLocalStorageStore(key: string, defaultValue: string) {
     getServerSnapshot: () => defaultValue,
 
     setValue: (value: string) => {
+      if (typeof window === "undefined") return;
       try {
         localStorage.setItem(key, value);
         // storage イベントは同一タブでは発火しないため、手動でイベントを作成
@@ -351,67 +211,6 @@ function LocalStorageExample() {
   );
 }
 
-// カスタムフックの例
-function useOnlineStatus() {
-  return useSyncExternalStore(
-    useCallback((callback) => {
-      window.addEventListener("online", callback);
-      window.addEventListener("offline", callback);
-      return () => {
-        window.removeEventListener("online", callback);
-        window.removeEventListener("offline", callback);
-      };
-    }, []),
-    () => navigator.onLine,
-    () => true
-  );
-}
-
-function useWindowSize() {
-  return useSyncExternalStore(
-    useCallback((callback) => {
-      window.addEventListener("resize", callback);
-      return () => window.removeEventListener("resize", callback);
-    }, []),
-    () => ({ width: window.innerWidth, height: window.innerHeight }),
-    () => ({ width: 0, height: 0 })
-  );
-}
-
-function CustomHooksExample() {
-  const isOnline = useOnlineStatus();
-  const windowSize = useWindowSize();
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 bg-muted rounded">
-          <h4 className="font-semibold mb-2">オンライン状態</h4>
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                isOnline ? "bg-green-500" : "bg-red-500"
-              }`}
-            />
-            <span>{isOnline ? "オンライン" : "オフライン"}</span>
-          </div>
-        </div>
-
-        <div className="p-4 bg-muted rounded">
-          <h4 className="font-semibold mb-2">ウィンドウサイズ</h4>
-          <p className="text-sm">
-            {windowSize.width} × {windowSize.height}
-          </p>
-        </div>
-      </div>
-
-      <div className="text-sm text-muted-foreground">
-        カスタムフックとして外部ストアの購読ロジックを再利用可能にしています。
-      </div>
-    </div>
-  );
-}
-
 export default function UseSyncExternalStorePage() {
   return (
     <div className="space-y-8">
@@ -450,13 +249,10 @@ const getSnapshot = () => navigator.onLine;`}</code>
       </Card>
 
       <Tabs defaultValue="online" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="online">オンライン</TabsTrigger>
-          <TabsTrigger value="window">ウィンドウ</TabsTrigger>
           <TabsTrigger value="counter">カウンター</TabsTrigger>
-          <TabsTrigger value="settings">設定</TabsTrigger>
           <TabsTrigger value="storage">ストレージ</TabsTrigger>
-          <TabsTrigger value="hooks">カスタム</TabsTrigger>
         </TabsList>
 
         <TabsContent value="online">
@@ -481,30 +277,6 @@ const getSnapshot = () => navigator.onLine;`}</code>
   },
   () => navigator.onLine,
   () => true // サーバーサイドでのデフォルト値
-);`}</code>
-              </pre>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="window">
-          <Card>
-            <CardHeader>
-              <CardTitle>ウィンドウサイズの監視</CardTitle>
-              <CardDescription>
-                ウィンドウサイズの変更をリアルタイムで追跡
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WindowSizeExample />
-              <pre className="bg-muted p-4 rounded-lg text-sm mt-4">
-                <code>{`const windowSize = useSyncExternalStore(
-  (callback) => {
-    window.addEventListener("resize", callback);
-    return () => window.removeEventListener("resize", callback);
-  },
-  () => ({ width: window.innerWidth, height: window.innerHeight }),
-  () => ({ width: 0, height: 0 })
 );`}</code>
               </pre>
             </CardContent>
@@ -552,38 +324,6 @@ const count = useSyncExternalStore(
           </Card>
         </TabsContent>
 
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>設定管理ストア</CardTitle>
-              <CardDescription>
-                アプリケーション設定の外部ストア管理
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <SettingsStoreExample />
-              <pre className="bg-muted p-4 rounded-lg text-sm mt-4">
-                <code>{`class SettingsStore {
-  private settings: Settings = { theme: "light", language: "ja", notifications: true };
-  private listeners = new Set<() => void>();
-
-  subscribe = (callback: () => void) => {
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
-  };
-
-  getSnapshot = () => ({ ...this.settings });
-
-  updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
-    this.settings[key] = value;
-    this.listeners.forEach(callback => callback());
-  };
-}`}</code>
-              </pre>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="storage">
           <Card>
             <CardHeader>
@@ -613,47 +353,6 @@ const count = useSyncExternalStore(
       window.dispatchEvent(new StorageEvent("storage", { key }));
     },
   };
-}`}</code>
-              </pre>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="hooks">
-          <Card>
-            <CardHeader>
-              <CardTitle>カスタムフックとしての活用</CardTitle>
-              <CardDescription>
-                再利用可能なカスタムフックの作成
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CustomHooksExample />
-              <pre className="bg-muted p-4 rounded-lg text-sm mt-4">
-                <code>{`function useOnlineStatus() {
-  return useSyncExternalStore(
-    useCallback((callback) => {
-      window.addEventListener("online", callback);
-      window.addEventListener("offline", callback);
-      return () => {
-        window.removeEventListener("online", callback);
-        window.removeEventListener("offline", callback);
-      };
-    }, []),
-    () => navigator.onLine,
-    () => true
-  );
-}
-
-function useWindowSize() {
-  return useSyncExternalStore(
-    useCallback((callback) => {
-      window.addEventListener("resize", callback);
-      return () => window.removeEventListener("resize", callback);
-    }, []),
-    () => ({ width: window.innerWidth, height: window.innerHeight }),
-    () => ({ width: 0, height: 0 })
-  );
 }`}</code>
               </pre>
             </CardContent>
