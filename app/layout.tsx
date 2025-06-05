@@ -49,6 +49,14 @@ const forms = [
 const nextjs = [
   { name: "Functions", path: "/nextjs/functions" },
   { name: "Components", path: "/nextjs/components" },
+  { name: "ルーティング", path: "/nextjs/routing" },
+  { name: "動的ルート", path: "/nextjs/dynamic-routes" },
+  { name: "ルートグループ", path: "/nextjs/route-groups" },
+  { name: "並列ルート", path: "/nextjs/parallel-routes" },
+  { name: "インターセプトルート", path: "/nextjs/intercepting-routes" },
+  { name: "Middleware", path: "/nextjs/middleware" },
+  { name: "Cookies", path: "/nextjs/cookies" },
+  { name: "NextAuth", path: "/nextjs/nextauth" },
 ];
 
 const auth = [
