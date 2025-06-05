@@ -55,8 +55,13 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
-  const product = products.find((p) => p.id === params.id);
+export default async function ProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const product = products.find((p) => p.id === id);
 
   if (!product) {
     notFound();
@@ -162,7 +167,7 @@ export async function generateStaticParams() {
 }`}</code>
           </pre>
           <p className="text-sm text-muted-foreground mt-4">
-            現在のURL: /product/{params.id}
+            現在のURL: /product/{id}
           </p>
         </CardContent>
       </Card>

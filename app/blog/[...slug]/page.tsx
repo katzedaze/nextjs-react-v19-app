@@ -118,12 +118,13 @@ export async function generateStaticParams(): Promise<{ slug: string[] }[]> {
   return paths;
 }
 
-export default function BlogPostPage({
+export default async function BlogPostPage({
   params,
 }: {
-  params: { slug: string[] };
+  params: Promise<{ slug: string[] }>;
 }) {
-  const post = getPostBySlug(params.slug);
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
 
   if (!post) {
     notFound();
@@ -232,14 +233,14 @@ export default function BlogPostPage({
             <div>
               <p className="text-sm font-medium mb-2">現在のURL構造:</p>
               <code className="bg-muted px-2 py-1 rounded text-sm">
-                /blog/{params.slug.join("/")}
+                /blog/{slug.join("/")}
               </code>
             </div>
 
             <div>
               <p className="text-sm font-medium mb-2">slugパラメータの値:</p>
               <pre className="bg-muted p-3 rounded text-sm">
-                {JSON.stringify(params.slug, null, 2)}
+                {JSON.stringify(slug, null, 2)}
               </pre>
             </div>
 

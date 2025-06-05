@@ -61,12 +61,12 @@ export async function generateStaticParams() {
   return paths;
 }
 
-export default function ShopProductPage({
+export default async function ShopProductPage({
   params,
 }: {
-  params: { category: string; id: string };
+  params: Promise<{ category: string; id: string }>;
 }) {
-  const { category, id } = params;
+  const { category, id } = await params;
 
   // カテゴリの存在確認
   if (!productsByCategory[category as keyof typeof productsByCategory]) {
@@ -239,7 +239,7 @@ export async function generateStaticParams() {
 }`}</code>
           </pre>
           <p className="text-sm text-muted-foreground mt-4">
-            現在のURL: /shop/{params.category}/{params.id}
+            現在のURL: /shop/{category}/{id}
           </p>
         </CardContent>
       </Card>
